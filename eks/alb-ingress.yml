@@ -1,0 +1,38 @@
+grafana:
+  admin:
+    existingSecret: grafana-admin
+    userKey: admin-user
+    passwordKey: admin-password
+  ingress:
+    enabled: true
+    ingressClassName: alb
+    annotations:
+      kubernetes.io/ingress.class: alb
+      alb.ingress.kubernetes.io/group.name: prometheus-stack
+      alb.ingress.kubernetes.io/scheme: internet-facing
+      alb.ingress.kubernetes.io/target-type: ip
+      alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80},{"HTTPS":443}]'
+      alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:eu-central-1:021891580761:certificate/ed400733-8b7b-42b9-b407-7c37a5f5391e
+      alb.ingress.kubernetes.io/ssl-redirect: '443'
+    hosts:
+      - grafana.gal-rozman.com
+    path: /
+    pathType: Prefix
+
+prometheus:
+  ingress:
+    enabled: true
+    ingressClassName: alb
+    annotations:
+      kubernetes.io/ingress.class: alb
+      alb.ingress.kubernetes.io/group.name: prometheus-stack
+      alb.ingress.kubernetes.io/scheme: internet-facing
+      alb.ingress.kubernetes.io/target-type: ip
+      alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80},{"HTTPS":443}]'
+      alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:eu-central-1:021891580761:certificate/ed400733-8b7b-42b9-b407-7c37a5f5391e
+      alb.ingress.kubernetes.io/ssl-redirect: '443'
+    hosts:
+      - prometheus.gal-rozman.com
+    paths:
+      - /
+    pathType: Prefix
