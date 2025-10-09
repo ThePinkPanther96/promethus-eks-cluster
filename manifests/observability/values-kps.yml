@@ -1,0 +1,58 @@
+grafana:
+  admin:
+    existingSecret: grafana-admin      # use the in-cluster secret (no Git)
+    userKey: admin-user
+    passwordKey: admin-password
+  persistence:
+    enabled: true
+    existingClaim: grafana-data        # PVC you created earlier
+  service:
+    type: ClusterIP
+    port: 80
+  ingress:
+    enabled: true
+    ingressClassName: alb              # handled by AWS LB Controller
+    annotations:
+      alb.ingress.kubernetes.io/scheme: internet-facing
+      alb.ingress.kubernetes.io/target-type: ip
+      alb.ingress.kubernetes.io/group.name: observability
+      alb.ingress.kubernetes.io/healthcheck-path: /login
+      alb.ingress.kubernetes.io/backend-protocol: HTTP
+      alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80},{"HTTPS":443}]'
+      alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:eu-central-1:021891580761:certificate/ed400733-8b7b-42b9-b407-7c37a5f5391e # TLS
+      alb.ingress.kubernetes.io/ssl-redirect: '443'
+    hosts:
+      - grafana.gal-rozman.com         # domain name (443)
+    path: /
+    pathType: Prefix
+
+prometheus:
+  ingress:
+    enabled: false                     # keep Prometheus UI internal for now
+  prometheusSpec:
+    retention: 15d
+    storageSpec:
+      volumeClaimTemplate:             # EBS gp3 per replica
+        spec:
+          storageClassName: gp3
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 50Gi
+
+alertmanager:
+  alertmanagerSpec:
+    storage:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: gp3
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 10Gi
+
+kube-state-metrics:
+  enabled: true
+
+prometheus-node-exporter:
+  enabled: true

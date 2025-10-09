@@ -1,7 +1,4 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: prometheus-ns
-  labels:
-    app.kubernetes.io/name: promethus
-    app.kubernetes.io/part-of: observability
+  name: observability-ns

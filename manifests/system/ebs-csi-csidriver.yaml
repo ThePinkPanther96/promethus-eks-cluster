@@ -1,0 +1,8 @@
+apiVersion: storage.k8s.io/v1
+kind: CSIDriver
+metadata:
+  name: ebs.csi.aws.com
+spec:
+  attachRequired: true          # kube-controller-manager must Attach/Detach
+  podInfoOnMount: false         # typical for EBS
+  fsGroupPolicy: File           # let kubelet chown files for fsGroup

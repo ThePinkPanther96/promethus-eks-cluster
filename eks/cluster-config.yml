@@ -1,38 +1,37 @@
-grafana:
-  admin:
-    existingSecret: grafana-admin
-    userKey: admin-user
-    passwordKey: admin-password
-  ingress:
-    enabled: true
-    ingressClassName: alb
-    annotations:
-      kubernetes.io/ingress.class: alb
-      alb.ingress.kubernetes.io/group.name: prometheus-stack
-      alb.ingress.kubernetes.io/scheme: internet-facing
-      alb.ingress.kubernetes.io/target-type: ip
-      alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80},{"HTTPS":443}]'
-      alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:eu-central-1:021891580761:certificate/b2ecec70-c917-429b-b7a0-a8cae01fdca7
-      alb.ingress.kubernetes.io/ssl-redirect: '443'
-    hosts:
-      - grafana.gal-rozman.com
-    path: /
-    pathType: Prefix
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
 
-prometheus:
-  ingress:
-    enabled: true
-    ingressClassName: alb
-    annotations:
-      kubernetes.io/ingress.class: alb
-      alb.ingress.kubernetes.io/group.name: prometheus-stack
-      alb.ingress.kubernetes.io/scheme: internet-facing
-      alb.ingress.kubernetes.io/target-type: ip
-      alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80},{"HTTPS":443}]'
-      alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:eu-central-1:021891580761:certificate/b2ecec70-c917-429b-b7a0-a8cae01fdca7
-      alb.ingress.kubernetes.io/ssl-redirect: '443'
-    hosts:
-      - prometheus.gal-rozman.com
-    paths:
-      - /
-    pathType: Prefix
+metadata:
+  name: monitoring-eks          # cluster name
+  region: eu-central-1          # your region
+  version: "1.31"               # a stable EKS version
+
+availabilityZones:              # constrain to exactly 2 AZs
+  - eu-central-1a
+  - eu-central-1b
+
+iam:
+  withOIDC: true                # needed later for IRSA (ALB controller)
+
+# vpc:
+#   id: "vpc-01726edb057271e76"
+
+managedNodeGroups:
+  - name: ng-general
+    amiFamily: AmazonLinux2023  # current EKS default going forward
+    instanceType: t3.small     # adjust if you want
+    desiredCapacity: 2
+    minSize: 2
+    maxSize: 4
+    privateNetworking: true     # worker nodes in private subnets
+    labels:
+      role: general
+    tags:
+      Name: monitoring-eks-ng-general
+    ssh:
+      allow: false              # can enable & supply key later if you want
+
+# Optional: turn on control-plane logs (useful for troubleshooting)
+cloudWatch:
+  clusterLogging:
+    enableTypes: ["api", "audit", "authenticator", "controllerManager", "scheduler"]
