@@ -1,0 +1,55 @@
+# manifests/apps/weather/deploy.yml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: weather-app
+  namespace: apps
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app.kubernetes.io/name: weather-app }
+  template:
+    metadata:
+      labels: { app.kubernetes.io/name: weather-app }
+    spec:
+      containers:
+        - name: app
+          image: thepinkpanther96/advanced-application-ci-cd-pipline:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 5001          # <- ensure this matches the app
+          startupProbe:
+            tcpSocket:
+              port: 5001
+            failureThreshold: 60
+            periodSeconds: 2
+          readinessProbe:
+            tcpSocket:
+              port: 5001
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 2
+          livenessProbe:
+            tcpSocket:
+              port: 5001
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 2
+          resources:
+            requests: { cpu: "100m", memory: "128Mi" }
+            limits:   { cpu: "500m", memory: "512Mi" } 
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: weather-app-svc
+  namespace: apps
+  labels: { app.kubernetes.io/name: weather-app }
+spec:
+  selector: { app.kubernetes.io/name: weather-app }
+  ports:
+    - name: http
+      port: 80
+      targetPort: 5001
+  type: ClusterIP

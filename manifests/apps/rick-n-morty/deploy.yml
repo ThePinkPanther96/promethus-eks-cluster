@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rick-n-morty-api
+  namespace: apps
+  labels: { app.kubernetes.io/name: rick-n-morty-api }
+spec:
+  replicas: 2
+  progressDeadlineSeconds: 600
+  selector:
+    matchLabels: { app.kubernetes.io/name: rick-n-morty-api }
+  template:
+    metadata:
+      labels: { app.kubernetes.io/name: rick-n-morty-api }
+    spec:
+      containers:
+        - name: app
+          image: thepinkpanther96/r-m-api-k8s-pipline:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 5002
+          # Give the app time to come up, then check 5002
+          # inside spec.template.spec.containers[0]
+          startupProbe:
+            tcpSocket:
+              port: 5002
+            failureThreshold: 60   # ~120s (60 * 2s)
+            periodSeconds: 2
+          
+          readinessProbe:
+            tcpSocket:
+              port: 5002
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 2
+          
+          livenessProbe:
+            tcpSocket:
+              port: 5002
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 2
+          resources:
+            requests: { cpu: "100m", memory: "128Mi" }
+            limits:   { cpu: "500m", memory: "256Mi" }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rick-n-morty-api-svc
+  namespace: apps
+  labels: { app.kubernetes.io/name: rick-n-morty-api }
+spec:
+  selector: { app.kubernetes.io/name: rick-n-morty-api }
+  ports:
+    - name: http
+      port: 80          # what the Ingress talks to
+      targetPort: 5002  # MUST match the container’s port
+  type: ClusterIP

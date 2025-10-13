@@ -73,5 +73,46 @@ kubectl apply -f manifests/storage/sc-gp3-default.yaml
 
 kubectl apply -f manifests/storage/pvcs/grafana-pvc.yaml
 
+# Place Grafana admin's password as an environment secret:
+kubectl -n observability-ns create secret generic grafana-admin \
+  --from-literal=admin-user=admin \
+  --from-literal=admin-password="PASSWORD" \
+  --dry-run=client -o yaml | kubectl apply -f -
+
+# verify password:
+kubectl -n observability-ns get secret grafana-admin \
+  -o jsonpath='{.data.admin-password}' | base64 -d; echo
+
+#  Install Prometheus Operator CRDs
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
+
+# Get the helm as manifest:
+helm show crds prometheus-community/kube-prometheus-stack \
+  > manifests/observability/kube-prometheus-crds.yml 
+
 # kube-prometheus-stack (Prometheus + Alertmanager + Grafana) with persistence + ALB: 
-# Create grafana admin secret, writ values (persistence, retention, Grafana Ingress via ALB), install the Prometheus Operator CRDs:
+# Create grafana admin secret, write values (persistence, retention, Grafana Ingress via ALB), install the Prometheus Operator CRDs:
+kubectl apply --server-side -f manifests/observability/kube-prometheus-crds.yml
+kubectl get crd | grep monitoring.coreos.com
+
+# Render & apply the stack
+helm template kps prometheus-community/kube-prometheus-stack \
+  -n observability-ns \
+  -f manifests/observability/values-kps.yml \
+  --include-crds=false \
+  > manifests/observability/kube-prometheus-stack.yml
+
+kubectl apply -f manifests/observability/kube-prometheus-stack.yml
+
+# Test:
+kubectl -n observability-ns get pods -w
+kubectl -n observability-ns get ingress
+
+# before proceeding with setting network policies and we will add the TLS
+# identify the requeired cert:
+aws acm list-certificates --region eu-central-1 \
+  --query "CertificateSummaryList[?DomainName=='Example.com'].CertificateArn" \
+  --output text
+
+## deploying apps (Weather and Rick and Morty apps) ##
