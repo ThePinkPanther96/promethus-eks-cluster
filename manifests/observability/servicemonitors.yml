@@ -1,0 +1,21 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: rick-n-morty-sm
+  namespace: observability-ns
+  labels: { release: kps }
+spec:
+  namespaceSelector: { matchNames: ["apps"] }
+  selector: { matchLabels: { app.kubernetes.io/name: rick-n-morty-api } }
+  endpoints: [{ port: http, path: /metrics, interval: 15s }]
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: weather-app-sm
+  namespace: observability-ns
+  labels: { release: kps }
+spec:
+  namespaceSelector: { matchNames: ["apps"] }
+  selector: { matchLabels: { app.kubernetes.io/name: weather-app } }
+  endpoints: [{ port: http, path: /metrics, interval: 15s }]
