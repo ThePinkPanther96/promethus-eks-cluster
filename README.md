@@ -2,6 +2,8 @@
 ----
 Production-ready, manifest-first **EKS** setup: a two-AZ cluster with **ALB Ingress (TLS/ACM)**, persistent storage via **EBS CSI (gp3)**, and full observability using **kube-prometheus-stack** (Prometheus, Alertmanager, Grafana). It deploys two sample apps (Rick & Morty, Weather) exposed by host-based Ingress and autoscaled with **HPA** using **metrics-server**. **ServiceMonitors** connect the apps to Prometheus, while Grafana provides dashboards—everything rendered to YAML and applied with kubectl.
 
+![Alt desc](https://github.com/ThePinkPanther96/promethus-eks-cluster/blob/main/diagram.png)
+
 ## Project Structure
 ---
 ```
